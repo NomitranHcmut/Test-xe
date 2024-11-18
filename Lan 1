@@ -118,16 +118,16 @@ float e1[] = {0.0, 0.0, 0.0};
 	char pwm[10];
 	int rec_flag = 0;
 	uint16_t t = 0;
-	float Kp1 = 6;//0.5
-	float Ki1 = 20;//20.3
+	float Kp1 = 8;//0.5
+	float Ki1 = 15;//20.3
 	float Kd1 = 0.00;
 	float integral1 = 0.0;
 	float derivative1 = 0.0;
 	float pid1 = 0.00;
 
 	float e2[] = {0.0, 0.0, 0.0};
-	float Kp2 = 6 ;//2
-	float Ki2 = 20;//20.3
+	float Kp2 = 8 ;//2
+	float Ki2 = 15;//20.3
 	float Kd2 = 0.00;
 	float integral2 = 0.0;
 	float derivative2 = 0.0;
