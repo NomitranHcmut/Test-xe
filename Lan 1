@@ -215,12 +215,12 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1,0);
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, 1);
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, 0);
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, 1);
 	
 	__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2,0);
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, 1);
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, 0);
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_14, 0);
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, 1);
 	
 	
 	HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_ALL);
