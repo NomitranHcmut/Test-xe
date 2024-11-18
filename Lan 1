@@ -118,7 +118,7 @@ float e1[] = {0.0, 0.0, 0.0};
 	char pwm[10];
 	int rec_flag = 0;
 	uint16_t t = 0;
-	float Kp1 = 5;//0.5
+	float Kp1 = 6;//0.5
 	float Ki1 = 12;//20.3
 	float Kd1 = 0;
 	float integral1 = 0.0;
@@ -126,7 +126,7 @@ float e1[] = {0.0, 0.0, 0.0};
 	float pid1 = 0.00;
 
 	float e2[] = {0.0, 0.0, 0.0};
-	float Kp2 = 5 ;//2
+	float Kp2 = 6 ;//2
 	float Ki2 = 12;//20.3
 	float Kd2 = 0;
 	float integral2 = 0.0;
@@ -246,23 +246,24 @@ int main(void)
 //						if (ss[i] < 150) ss[i] = 0;
 //					ss[i]	= ss[i] + dt_t*(adc_val[i]-ss[i]);
 					}
+					/*
 					if (ss[0] < 150) ss[0] = 0;
 //					else if (ss[0] > 1800) ss[0] = 3000;
 					if (ss[4] < 150) ss[4] = 0;
 //					else if (ss[4] > 1800) ss[4] = 3000;
-
+  
 					if(ss[3]>=1500 && ss[1]>=1500 && ss[0]>=1500 && ss[4]>=1500){
 						ss[0]=0;
 						ss[1]=0;
 						ss[3]=0;
 						ss[4]=0;
 					}
-
+  */
 
 					ADC_Flag = 0;
 				}
 			e2_Sensor = (8.5 * (ss[4] - ss[0]) + 1*(ss[3] - ss[1])) / (ss[0] + ss[1] + ss[2] + ss[3] + ss[4]);//6
-			e2_Real = 1.4617 * e2_Sensor - 0.776;
+			e2_Real = 3.8617 * e2_Sensor - 0.776;
 
 //				if(abs(e2_Sensor)<4){
 //					vr = 300;
@@ -276,8 +277,8 @@ int main(void)
 //				e3 = abs(e2_Sensor-e2_Sensor_pre);//(300*tsamp)
 				e2_Sensor_pre = e2_Sensor;
 
-				if (e2_Sensor <= 0.01 && e2_Sensor >= -0.01)
-					e2_Real = 0;
+				//if (e2_Sensor <= 0.01 && e2_Sensor >= -0.01)
+				//	e2_Real = 0;
 
 
 				Motor_1 = ((vr / r) + ((b * (k1 * e2_Real + k2 * e3)) / (2 * r))) * (60 / (PI * 2)); //((300/r)-((b*(0.1745*e2_Sensor-2.2279*e3))/(2*r)))*(60/(PI*2))
