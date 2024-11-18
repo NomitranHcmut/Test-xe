@@ -118,7 +118,7 @@ float e1[] = {0.0, 0.0, 0.0};
 	char pwm[10];
 	int rec_flag = 0;
 	uint16_t t = 0;
-	float Kp1 = 0.5;//0.5
+	float Kp1 = 6;//0.5
 	float Ki1 = 20;//20.3
 	float Kd1 = 0.00;
 	float integral1 = 0.0;
@@ -126,7 +126,7 @@ float e1[] = {0.0, 0.0, 0.0};
 	float pid1 = 0.00;
 
 	float e2[] = {0.0, 0.0, 0.0};
-	float Kp2 = 0.5;//2
+	float Kp2 = 6 ;//2
 	float Ki2 = 20;//20.3
 	float Kd2 = 0.00;
 	float integral2 = 0.0;
@@ -262,7 +262,7 @@ int main(void)
 					ADC_Flag = 0;
 				}
 			e2_Sensor = (8.5 * (ss[4] - ss[0]) + 1*(ss[3] - ss[1])) / (ss[0] + ss[1] + ss[2] + ss[3] + ss[4]);//6
-			e2_Real = 13.4617 * e2_Sensor - 0.776;
+			e2_Real = 1.4617 * e2_Sensor - 0.776;
 
 //				if(abs(e2_Sensor)<4){
 //					vr = 300;
@@ -289,7 +289,7 @@ int main(void)
 					Motor_2 = 0;
 				}
 				*/
-						
+				/*
 				if((ss[2] < 1500 && ss[1] < 1500 && ss[3] < 1500 && ss[0] > 1500 && ss[4] > 1500)       //10001
 				|| (ss[1]>1500 && ss[2]>1500 && ss[3]>1500)
 				|| (ss[2] < 1500 && ss[1] > 1500 && ss[3] > 1500 && ss[0] < 1500 && ss[4] < 1500)       //01010
@@ -305,7 +305,7 @@ int main(void)
 							Motor_2 = 60;
 				          }
 						
-				
+				*/
 				
 				
 				
