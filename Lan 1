@@ -263,7 +263,7 @@ int main(void)
 					ADC_Flag = 0;
 				}
 			e2_Sensor = (8.5 * (ss[4] - ss[0]) + 1*(ss[3] - ss[1])) / (ss[0] + ss[1] + ss[2] + ss[3] + ss[4]);//6
-			e2_Real = 3.8617 * e2_Sensor - 0.776;
+			e2_Real = 4.8617 * e2_Sensor - 0.776;
 
 //				if(abs(e2_Sensor)<4){
 //					vr = 300;
