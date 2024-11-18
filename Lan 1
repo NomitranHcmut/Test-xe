@@ -207,7 +207,7 @@ int main(void)
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
 	// HAL_TIM_Encoder_Start_IT(&htim4,TIM_CHANNEL_ALL);
-	HAL_ADC_Start_DMA(&hadc1, (uint32_t*) adc_val, NUM_SENSOR);
+	HAL_ADC_Start_DMA(&hadc1, (uint32_t*) adc_val, 5);
 	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
 	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
   /* USER CODE END 2 */
@@ -234,7 +234,7 @@ int main(void)
 
 
     /* USER CODE END WHILE */
-   
+
     /* USER CODE BEGIN 3 */
 		 nowTime = HAL_GetTick();
 		
@@ -450,7 +450,7 @@ static void MX_ADC1_Init(void)
   */
   sConfig.Channel = ADC_CHANNEL_4;
   sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_13CYCLES_5;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
