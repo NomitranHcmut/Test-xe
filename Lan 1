@@ -138,7 +138,15 @@ float tsamp = 0.01;
 
 
 	
-int16_t adc_val[NUM_SENSOR] = { 0, 0, 0, 0, 0 };
+uint16_t adc_val[NUM_SENSOR] = { 0, 0, 0, 0, 0 };
+uint16_t adc_val_min[5] = { 0, 0, 0, 0, 0 };
+uint16_t adc_val_max[5] = { 0, 0, 0, 0, 0 };
+float K[5] = {0, 0, 0, 0, 0};
+uint16_t adc_val_calib[5] = {0, 0, 0, 0, 0};
+uint16_t y_max = 0;
+uint16_t y_min = 0;
+uint16_t sensorcum = 0;
+uint16_t adc_val_state[5] = {0, 0, 0, 0, 0};
 float ss[5] = { 0, 0, 0, 0, 0 };
 bool ADC_Flag = 0;
 float e2_Sensor = 0;
@@ -159,6 +167,8 @@ int co_hang = 0;
 int line_den = 0;
 int hang_do = 0;
 int hang_xanh = 0;
+uint16_t j = 0;
+
 
 
 
@@ -171,6 +181,53 @@ float abs_(float a) {
 	else return a;
 }
 
+uint16_t max(uint16_t a, uint16_t b){
+	if( a < b) return b;
+	else return a;
+}
+
+uint16_t min(uint16_t a, uint16_t b){
+	if(a < b) return a;
+	else return b;
+}
+
+void SensorCalib(void){
+
+	while(j < 600){
+	
+		for(int i = 0; i < 5; i++){
+			if(adc_val[i] != 0){
+			   adc_val_min[i] = min(adc_val_min[i], adc_val[i]);
+				 adc_val_max[i] = max(adc_val_max[i], adc_val[i]);
+			
+			}		
+		}
+		HAL_Delay(10);
+		j++;
+	}
+	for(int i = 0; i < 5; i++){
+		y_max += adc_val_max[i];
+		y_min += adc_val_min[i];	
+	}
+	y_max = (uint16_t) y_max / 5;
+	y_min = (uint16_t) y_min / 5;
+	
+	for(int i = 0; i < 5; i++){
+		K[i] = (float) (y_max - y_min)/(adc_val_max[i] - adc_val_min[i]);
+		adc_val_calib[i] = (uint16_t) (y_min + K[i]*(adc_val[i] - adc_val_min[i]));
+		sensorcum += adc_val_calib[i];
+		if(adc_val_calib[i] >= (y_max * 0.5)){
+			adc_val_state[i] = 1;
+			line_den += 1;
+		}
+		else{
+			adc_val_state[i] = 0;
+		}	
+	}
+	sensorcum = sensorcum / NUM_SENSOR;
+	
+	
+}
 
 
 /* USER CODE END 0 */
@@ -251,7 +308,7 @@ int main(void)
 						ss[i] = adc_val[i];
 //						if (ss[i] < 150) ss[i] = 0;
 //					ss[i]	= ss[i] + dt_t*(adc_val[i]-ss[i]);
-						if(ss[i] > 1200) line_den += 1;
+						SensorCalib();
 					}
 					/*
 					if (ss[0] < 150) ss[0] = 0;
