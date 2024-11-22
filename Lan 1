@@ -114,26 +114,26 @@ uint32_t preTime = 0;
 uint32_t nowTime = 0;
 
 float e1[] = {0.0, 0.0, 0.0};
-	float setpoints[2] = {0,0};
-	char pwm[10];
-	int rec_flag = 0;
-	uint16_t t = 0;
-	float Kp1 = 6;//0.5
-	float Ki1 = 12;//20.3
-	float Kd1 = 0;
-	float integral1 = 0.0;
-	float derivative1 = 0.0;
-	float pid1 = 0.00;
+float setpoints[2] = {0,0};
+char pwm[10];
+int rec_flag = 0;
+uint16_t t = 0;
+float Kp1 = 6;//0.5
+float Ki1 = 12;//20.3
+float Kd1 = 0;
+float integral1 = 0.0;
+float derivative1 = 0.0;
+float pid1 = 0.00;
 
-	float e2[] = {0.0, 0.0, 0.0};
-	float Kp2 = 6 ;//2
-	float Ki2 = 12;//20.3
-	float Kd2 = 0;
-	float integral2 = 0.0;
-	float derivative2 = 0.0;
-	float pid2 = 0.00;
-	float pid_max = 0.0;
-	float LimitPWM = 500;
+float e2[] = {0.0, 0.0, 0.0};
+float Kp2 = 6 ;//2
+float Ki2 = 12;//20.3
+float Kd2 = 0;
+float integral2 = 0.0;
+float derivative2 = 0.0;
+float pid2 = 0.00;
+float pid_max = 0.0;
+float LimitPWM = 500;
 float tsamp = 0.01;
 
 
@@ -150,14 +150,17 @@ float vr = 300; // van toc xe chay
 float b = 200;   //khoang cach 2 banh, mm
 float r = 32.5; //ban kinh banh xe, mm
 
-float e3 = 0;
+float  e3 = 0;
 float k1 = 0.1745, k2 = -2.2279, k3 = 0;//0.1745
 float PI = 3.14159265359;
 float Motor_1 = 0;
 float Motor_2 = 0;
+int co_hang = 0;
+int line_den = 0;
+int hang_do = 0;
+int hang_xanh = 0;
 
 
-int temp = 0;
 
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
 	ADC_Flag = 1;
@@ -248,6 +251,7 @@ int main(void)
 						ss[i] = adc_val[i];
 //						if (ss[i] < 150) ss[i] = 0;
 //					ss[i]	= ss[i] + dt_t*(adc_val[i]-ss[i]);
+						if(ss[i] > 1200) line_den += 1;
 					}
 					/*
 					if (ss[0] < 150) ss[0] = 0;
@@ -313,7 +317,6 @@ int main(void)
 				
 				
 				
-				
 			nowPulse_Encoder1 = __HAL_TIM_GET_COUNTER(&htim3);
 
 			deltaPulse_Encoder1 = abs_((int)(nowPulse_Encoder1 - prePulse_Encoder1));
@@ -335,34 +338,50 @@ int main(void)
 
 
 			e1[1] = Motor_1 - omega_Encoder1;//setpoints[0]
-            integral1 += e1[1] * tsamp;
-            derivative1 = (e1[1] - e1[0])/tsamp;
-            e1[0] = e1[1];
-            pid1 = Kp1*e1[1] + Ki1*integral1 + Kd1*derivative1;
+      integral1 += e1[1] * tsamp;
+      derivative1 = (e1[1] - e1[0])/tsamp;
+      e1[0] = e1[1];
+      pid1 = Kp1*e1[1] + Ki1*integral1 + Kd1*derivative1;
 
          
 
-            e2[1] = Motor_2 - omega_Encoder2;//setpoints[0]
-            integral2 += e2[1] * tsamp;
-            derivative2 = (e2[1] - e2[0])/tsamp;
-            e2[0] = e2[1];
-            pid2 = Kp2*e2[1] + Ki2*integral2 + Kd2*derivative2;
+      e2[1] = Motor_2 - omega_Encoder2;//setpoints[0]
+      integral2 += e2[1] * tsamp;
+      derivative2 = (e2[1] - e2[0])/tsamp;
+      e2[0] = e2[1];
+      pid2 = Kp2*e2[1] + Ki2*integral2 + Kd2*derivative2;
 
+			TIM2->CCR1 =(uint32_t)pid1; //pid1
+			TIM2->CCR2 =(uint32_t)pid2;//pid2
 			
-			if(ss[1] > 2200 && ss[2] > 2200 && ss[3] > 2200){				
-				TIM2->CCR1 = 0; 
-			  TIM2->CCR2 = 0;
-				temp = 1;
-				HAL_Delay(5000);
-				TIM2->CCR1 = 50; 
-			  TIM2->CCR2 = 50;
+			if(ss[1] > 2200 && ss[2] > 2200 && ss[3] > 2200 && co_hang == 0){
 				
-				}
+				TIM2->CCR1 = 0;
+				TIM2->CCR2 = 0;
+				
+				HAL_Delay(5000);
+				TIM2->CCR1 = 50;
+				TIM2->CCR2 = 50;
+			  co_hang = 1;
+				hang_do = 1;
+			}
 			
+			if( co_hang == 1 && line_den >= 4 && hang_do == 1){
 			
-			else {
-			 TIM2->CCR1 =(uint32_t)pid1; //pid1
-			 TIM2->CCR2 =(uint32_t)pid2;//pid2
+				Motor_1 = 150;
+			  Motor_2 = 60;
+			
+			}
+			else{
+			
+				Motor_1 = 150;
+			  Motor_2 = 60;
+			
+			}
+			if( line_den == 0) {
+				TIM2->CCR1 = 0;
+				TIM2->CCR2 = 0;
+			
 			}
 			
 //            TIM1->CCR1 =500;
@@ -370,6 +389,7 @@ int main(void)
 
 			prePulse_Encoder2 = nowPulse_Encoder2;
 			prePulse_Encoder1 = nowPulse_Encoder1;
+			line_den = 0;
 			
 
 			preTime = nowTime;
