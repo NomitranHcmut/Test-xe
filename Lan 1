@@ -118,7 +118,7 @@ float e1[] = {0.0, 0.0, 0.0};
 	char pwm[10];
 	int rec_flag = 0;
 	uint16_t t = 0;
-	float Kp1 = 3;//0.5
+	float Kp1 = 6;//0.5
 	float Ki1 = 12;//20.3
 	float Kd1 = 0;
 	float integral1 = 0.0;
@@ -126,7 +126,7 @@ float e1[] = {0.0, 0.0, 0.0};
 	float pid1 = 0.00;
 
 	float e2[] = {0.0, 0.0, 0.0};
-	float Kp2 = 3 ;//2
+	float Kp2 = 6 ;//2
 	float Ki2 = 12;//20.3
 	float Kd2 = 0;
 	float integral2 = 0.0;
@@ -238,21 +238,22 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-			
+			/*
 		
-		if ( ss[0] < 1500 && ss[1] > 1000 && ss[2] > 1000 && ss[3] > 1000 && ss[4] < 1500  ) {
+		if ( ss[0] < 1000 &&  ss[1] > 1500 && ss[2] > 1500  && ss[3] > 1500 && ss[4] < 1000 && flag == 0  ) {
             
-       
+        flag = 1;
         TIM2->CCR1 = 0;
         TIM2->CCR2 = 0;
 			  HAL_Delay(2000);
-			  
+			 
 			  //HAL_Delay(2000);
        // TIM2->CCR1 = 50;
        // TIM2->CCR2 = 50;
 				
 
     }
+		*/
 		 nowTime = HAL_GetTick();
 		
       if (nowTime- preTime >= tsamp * 1000 ) {
@@ -361,7 +362,7 @@ int main(void)
             derivative2 = (e2[1] - e2[0])/tsamp;
             e2[0] = e2[1];
             pid2 = Kp2*e2[1] + Ki2*integral2 + Kd2*derivative2;
-       if(pid1 > 499) pid1 = 499;
+      if(pid1 > 499) pid1 = 499;
 			if(pid1 < -499) pid1 = -499;
 			if(pid2 > 499) pid2 = 499;
 			if(pid2 < -499) pid2 = -499;
@@ -586,9 +587,9 @@ static void MX_TIM2_Init(void)
 
   /* USER CODE END TIM2_Init 1 */
   htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 159;
+  htim2.Init.Prescaler = 159; //159
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 499;
+  htim2.Init.Period = 499; //499
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
