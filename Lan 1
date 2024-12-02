@@ -162,39 +162,18 @@ int flag = 0;
 float giatoc = 0.1;
 
 //----------------Cam bien mau--------------- //
-uint16_t red;
-uint16_t green ;
-uint16_t blue;
-uint16_t clear_data ;
+volatile uint16_t red;
+volatile uint16_t green ;
+volatile uint16_t blue;
+volatile uint16_t clear_data ;
 uint8_t rx_buff[13];
-uint8_t red_box = 0;
-uint8_t green_box = 0;
-uint8_t blue_box = 0;
-bool co_hang = 0;
-bool stop = 0;
-
-
-void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
-	ADC_Flag = 1;
-}
-
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-	if(huart->Instance == huart2.Instance)
-	{
-		HAL_UART_Receive_IT(&huart2, rx_buff, sizeof(rx_buff));
-		red = (rx_buff[4] << 8) | rx_buff[5];
-    green = (rx_buff[6] << 8) | rx_buff[7];
-    blue = (rx_buff[8] << 8) | rx_buff[9];
-    clear_data = (rx_buff[10] << 8) | rx_buff[11];
-	}
-
-}
-
-float abs_(float a) {
-	if(a < 0) return -a;
-	else return a;
-}
+uint8_t data[13];
+volatile uint8_t red_box = 0;
+volatile uint8_t green_box = 0;
+volatile uint8_t blue_box = 0;
+volatile bool co_hang = 0;
+volatile bool stop = 0;
+volatile bool color_flag = 0;
 
 void color_recognize(void)
 {
@@ -228,6 +207,32 @@ void color_recognize(void)
 	
 	}
 }
+
+void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc) {
+	ADC_Flag = 1;
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	if(huart->Instance == huart2.Instance)
+	{
+		HAL_UART_Receive_IT(&huart2, rx_buff, sizeof(rx_buff));
+		color_flag = 1;
+//		red = (rx_buff[4] << 8) | rx_buff[5];
+//    green = (rx_buff[6] << 8) | rx_buff[7];
+//    blue = (rx_buff[8] << 8) | rx_buff[9];
+//    clear_data = (rx_buff[10] << 8) | rx_buff[11];
+//		color_recognize();
+	}
+
+}
+
+float abs_(float a) {
+	if(a < 0) return -a;
+	else return a;
+}
+
+
 
 /* USER CODE END 0 */
 
@@ -272,6 +277,7 @@ int main(void)
 	// HAL_TIM_Encoder_Start_IT(&htim4,TIM_CHANNEL_ALL);
 	HAL_UART_Receive_IT(&huart2, rx_buff, sizeof(rx_buff));
 	HAL_ADC_Start_DMA(&hadc1, (uint32_t*) adc_val, 5);
+	HAL_UART_Receive_DMA(&huart2, data, 13);
 	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
 	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
   /* USER CODE END 2 */
@@ -295,29 +301,66 @@ int main(void)
   while (1)
   {
 		// color_recognize();
+		if(color_flag)
+		{
+			red = (rx_buff[4] << 8) | rx_buff[5];
+      green = (rx_buff[6] << 8) | rx_buff[7];
+      blue = (rx_buff[8] << 8) | rx_buff[9];
+      clear_data = (rx_buff[10] << 8) | rx_buff[11];
+		  if( (red > 100 && red < 400) && (green > 50 && green < 200) && (blue > 50 && blue < 200))
+	{
+		red_box = 1;
+		blue_box = 0;
+		green_box = 0;	
+		co_hang = 1;
+		count = 1;
+	}
+	else if((red > 100 && red < 250) && (green > 200 && green < 500) && (blue > 100 && blue < 250))
+	{
+		red_box = 0;
+		blue_box = 0;
+		green_box = 1;
+    co_hang = 1;		
+		count = 2;
+	}
+	else if((red > 50 && red < 250) && (green > 200 && green < 450) && (blue > 150 && blue < 700))
+	{
+		red_box = 0;
+		blue_box = 1;
+		green_box = 0;
+		co_hang = 1;
+	}
+	else
+	{
+		red_box = 0;
+		blue_box = 0;
+		green_box = 0;
+		co_hang = 0;
+	
+	}
+		color_flag = 0;
+		}
 		
-		if ( ss[0] < 1000 &&  ss[1] > 1500 && ss[2] > 1500  && ss[3] > 1500 && ss[4] < 1000 && co_hang == 0  ) {
-            
-        stop = 1;
+		if ( ss[0] < 1000 &&  ss[1] > 1500 && ss[2] > 1500  && ss[3] > 1500 && ss[4] < 1000 && flag == 0  ) {
+         flag = 1;  
+       // stop = 1;
+		   // co_hang = 1;
         TIM2->CCR1 = 0;
         TIM2->CCR2 = 0;
-			  HAL_Delay(2000);
-			  color_recognize();
-		    HAL_Delay(2000);
-			  //HAL_Delay(2000);
-       // TIM2->CCR1 = 50;
-       // TIM2->CCR2 = 50;
+		    
+			  HAL_Delay(3000);
+		
+			
+			  
+    
 				
     }
-		if ( ss[0] < 1000 &&  ss[1] < 1000 && ss[2] < 1000  && ss[3] < 1000 && ss[4] < 1000 && co_hang == 1  ) {
-        stop = 1;    
+		if ( ss[0] < 1000 &&  ss[1] < 1000 && ss[2] < 1000  && ss[3] < 1000 && ss[4] < 1000 && flag == 1 ) {
+        stop = 1;   
+		
         TIM2->CCR1 = 0;
         TIM2->CCR2 = 0;
-				 
-			  //HAL_Delay(2000);
-       // TIM2->CCR1 = 50;
-       // TIM2->CCR2 = 50;
-				
+				 			
     }
 
 
@@ -338,33 +381,17 @@ int main(void)
 			e2_Sensor = (32 * (ss[4] - ss[0]) + 16*(ss[3] - ss[1])) / (ss[0] + ss[1] + ss[2] + ss[3] + ss[4]);//6
 			e2_Real = 26/20.1* e2_Sensor - 2.13;
 
-//				if(abs(e2_Sensor)<4){
-//					vr = 300;
-//				}
-//				else if(abs(e2_Sensor)>=4){
-//					vr = 150;
-//				}
+
 				e3 = asin(e2_Sensor /73 );//73
 	
 			
-//				e3 = abs(e2_Sensor-e2_Sensor_pre);//(300*tsamp)
-				e2_Sensor_pre = e2_Sensor;
 
-				//if (e2_Sensor <= 0.01 && e2_Sensor >= -0.01)
-				//	e2_Real = 0;
-
+				e2_Sensor_pre = e2_Sensor;		
 
 				Motor_1 = ((vr / r) + ((b * (k1 * e2_Real + k2 * e3)) / (2 * r))) * (60 / (PI * 2)); //((300/r)-((b*(0.1745*e2_Sensor-2.2279*e3))/(2*r)))*(60/(PI*2))
 				Motor_2 = ((vr / r) - ((b * (k1 * e2_Real + k2 * e3)) / (2 * r))) * (60 / (PI * 2));	
-				/*
-				if (adc_val[0] <= 150 && adc_val[4] <= 150 && adc_val[3] <= 150
-						&& adc_val[2] <= 150 && adc_val[1] <= 150) {
-					Motor_1 = 0;
-					Motor_2 = 0;
-				}
-				*/
-				
-				if( ((ss[2] < 1500 && ss[1] < 1500 && ss[3] < 1500 && ss[0] > 1500 && ss[4] > 1500)       //10001
+			
+					 if( ((ss[2] < 1500 && ss[1] < 1500 && ss[3] < 1500 && ss[0] > 1500 && ss[4] > 1500)       //10001
 				|| (ss[1]>1500 && ss[2]>1500 && ss[3]>1500)
 				|| (ss[2] < 1500 && ss[1] > 1500 && ss[3] > 1500 && ss[0] < 1500 && ss[4] < 1500)       //01010
 				 || (ss[2] < 1500 && ss[1] > 1500 && ss[3] > 1500 && ss[0] < 1500 && ss[4] > 1500)       //01011
@@ -373,23 +400,19 @@ int main(void)
 				 || (ss[2] < 1500 && ss[1] > 1500 && ss[3] < 1500 && ss[0] > 1500 && ss[4] > 1500)       //11001
 				 || (ss[2] < 1500 && ss[1] < 1500 && ss[3] > 1500 && ss[0] > 1500 && ss[4] > 1500)       //10011
 				 || (ss[2] > 1500 && ss[1] < 1500 && ss[3] > 1500 && ss[0] > 1500 && ss[4] < 1500)       //10110
-				 || (ss[2] > 1500 && ss[1] > 1500 && ss[3] < 1500 && ss[0] < 1500 && ss[4] > 1500)) && flag == 1  )   //01101
-				 {
-					 if(red_box == 1)
+				 || (ss[2] > 1500 && ss[1] > 1500 && ss[3] < 1500 && ss[0] < 1500 && ss[4] > 1500)))   //01101
+				 {		
+					 if(count == 1)
 					 {
-							Motor_1 = 60; 
-							Motor_2 = 150; 
+						Motor_1 = 60; 
+					  Motor_2 = 150;	
 					 }
-					 if(green_box == 1)
+					 		if(count == 2)
 					 {
-							Motor_1 = 150; 
-							Motor_2 = 60; 
+						Motor_1 = 150; 
+					  Motor_2 = 60;	
+					 } 
 					 }
-					 }
-						
-				
-				
-				
 				
 			nowPulse_Encoder1 = __HAL_TIM_GET_COUNTER(&htim3);
 
@@ -431,19 +454,18 @@ int main(void)
 //			 }
 			 
 			
-					TIM2->CCR1 =(uint32_t)pid1; //pid1
+				  TIM2->CCR1 =(uint32_t)pid1; //pid1
 			    TIM2->CCR2 =(uint32_t)pid2;//pid2
 			 
 			
-//            TIM1->CCR1 =500;
-//            TIM1->CCR2 =500;
+
 
 			prePulse_Encoder2 = nowPulse_Encoder2;
 			prePulse_Encoder1 = nowPulse_Encoder1;
 			
 
 			preTime = nowTime;
-//		}
+
 
     /* USER CODE END WHILE */
 
