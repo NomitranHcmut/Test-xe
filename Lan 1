@@ -64,6 +64,7 @@ TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim3;
 TIM_HandleTypeDef htim4;
 
+UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
@@ -82,6 +83,7 @@ static void MX_TIM1_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_USART2_UART_Init(void);
+static void MX_USART1_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
 
@@ -169,6 +171,7 @@ volatile uint16_t clear_data ;
 
 uint8_t rx_buff[13];
 uint8_t data[13];
+char buffer[50];
 
 volatile uint16_t CT;
 volatile uint16_t Lux;
@@ -255,6 +258,58 @@ float abs_(float a) {
 	else return a;
 }
 
+void Transmit_data(char *data)
+{
+	HAL_UART_Transmit_IT(&huart1,(uint8_t*) data, strlen(data));
+
+}
+
+// Hàm chuyen doi du lieu thanh chuoi
+void floatToString(float value, char* buffer, int precision) {
+    int pos = 0;
+
+    // Ki?m tra s? âm
+    if (value < 0) {
+        buffer[pos++] = '-';  // Thêm d?u âm vào buffer
+        value = -value;       // L?y giá tr? tuy?t d?i c?a s?
+    }
+
+    // Tách ph?n nguyên và ph?n th?p phân
+    int intPart = (int)value;              // Ph?n nguyên
+    float fracPart = value - (float)intPart; // Ph?n th?p phân
+
+    // Chuy?n d?i ph?n nguyên
+    if (intPart == 0) {
+        buffer[pos++] = '0';  // N?u ph?n nguyên là 0
+    } else {
+        // Chuy?n d?i t?ng ch? s? c?a ph?n nguyên
+        int start = pos;
+        while (intPart > 0) {
+            buffer[pos++] = (intPart % 10) + '0';
+            intPart /= 10;
+        }
+        // Ð?o ngu?c ph?n nguyên
+        for (int i = start, j = pos - 1; i < j; i++, j--) {
+            char temp = buffer[i];
+            buffer[i] = buffer[j];
+            buffer[j] = temp;
+        }
+    }
+
+    // Thêm d?u ch?m th?p phân
+    buffer[pos++] = '.';
+
+    // Chuy?n d?i ph?n th?p phân v?i d? chính xác cho tru?c
+    for (int i = 0; i < precision; i++) {
+        fracPart *= 10; // D?ch ph?n th?p phân sang trái
+        int fracDigit = (int)fracPart; // L?y ph?n nguyên c?a s? th?p phân
+        buffer[pos++] = fracDigit + '0'; // Thêm vào buffer
+        fracPart -= fracDigit; // Lo?i b? ph?n nguyên v?a x? lý
+    }
+
+    buffer[pos] = '\0'; // K?t thúc chu?i
+}
+
 
 
 /* USER CODE END 0 */
@@ -264,7 +319,7 @@ float abs_(float a) {
   * @retval int
   */
 int main(void)
-	{
+{
 
   /* USER CODE BEGIN 1 */
 
@@ -296,6 +351,7 @@ int main(void)
   MX_TIM3_Init();
   MX_ADC1_Init();
   MX_USART2_UART_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
 	// HAL_TIM_Encoder_Start_IT(&htim4,TIM_CHANNEL_ALL);
 	HAL_UART_Receive_IT(&huart2, rx_buff, sizeof(rx_buff));
@@ -368,6 +424,9 @@ int main(void)
 		}
 		
 		*/
+	
+		
+		
 		color_recognize();
 		
 		// Dung lay hang
@@ -401,10 +460,11 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-		 nowTime = HAL_GetTick();
+		 
 		 vr = nowTime * giatoc;
 		if(vr >= 500) vr = 500;
-      if (nowTime- preTime >= tsamp * 1000 ) {
+		nowTime = HAL_GetTick();
+      if (nowTime- preTime >= tsamp * 1000 ){
 			if (ADC_Flag){
 					float dt_t = 0.4;
 					for (int i = 0; i < 5; i++) {
@@ -416,7 +476,14 @@ int main(void)
 			e2_Real = 26/20.1* e2_Sensor - 2.13;
 				e3 = asin(e2_Sensor /73 );//73
 				e2_Sensor_pre = e2_Sensor;		
-
+				
+				// Truyen nhan du lieu e2 ve	
+    floatToString(e2_Real, buffer, 2);
+		strcat(buffer, "\n"); // Thêm ký t? xu?ng dòng
+		Transmit_data(buffer);
+				
+				
+				
 				Motor_1 = ((vr / r) + ((b * (k1 * e2_Real + k2 * e3)) / (2 * r))) * (60 / (PI * 2)); //((300/r)-((b*(0.1745*e2_Sensor-2.2279*e3))/(2*r)))*(60/(PI*2))
 				Motor_2 = ((vr / r) - ((b * (k1 * e2_Real + k2 * e3)) / (2 * r))) * (60 / (PI * 2));	
 			
@@ -854,6 +921,39 @@ static void MX_TIM4_Init(void)
   /* USER CODE BEGIN TIM4_Init 2 */
 
   /* USER CODE END TIM4_Init 2 */
+
+}
+
+/**
+  * @brief USART1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART1_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART1_Init 0 */
+
+  /* USER CODE END USART1_Init 0 */
+
+  /* USER CODE BEGIN USART1_Init 1 */
+
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 9600;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART1_Init 2 */
+
+  /* USER CODE END USART1_Init 2 */
 
 }
 
