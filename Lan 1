@@ -120,6 +120,7 @@ uint32_t nowTime = 0;
 uint32_t preTime_1 = 0;
 uint32_t nowTime_1 = 0;
 
+
 float e1[] = {0.0, 0.0, 0.0};
 	float setpoints[2] = {0,0};
 	char pwm[10];
@@ -429,11 +430,11 @@ int main(void)
 	
 		
 		
-		color_recognize();
+		//color_recognize();
 		
 		// Dung lay hang
-		if ( ss[0] < 1000 &&  ss[1] > 1500 && ss[2] > 1500  && ss[3] > 1500 && ss[4] < 1000 && flag == 0  ) {
-          
+		if ( ss[0] < 1000 &&  ss[1] > 1500 && ss[2] > 1500  && ss[3] > 1500 && ss[4] < 1000 && flag == 0  ){
+   
        stop = 1;
 		   // co_hang = 1;
         TIM2->CCR1 = 0;
@@ -445,7 +446,7 @@ int main(void)
 					tiep_tuc = 2;
 					integral1 = 0;
 					integral2 = 0;
-					HAL_Delay(2000);
+					HAL_Delay(3000);
 				  }	
 				 // tiep_tuc = 1;
     }
@@ -464,14 +465,64 @@ int main(void)
     /* USER CODE BEGIN 3 */
 		 
 		 vr = nowTime * giatoc;
-		if(vr >= 500) vr = 500;
+		if(vr >= 400) vr = 400;
 		
-
+		// Truyen nhan du lieu e2 ve
 		
-			nowTime = HAL_GetTick();
+    
+		
+		
+		
+		nowTime = HAL_GetTick();
       if (nowTime- preTime >= tsamp * 1000 ){
-	
+			if (ADC_Flag){
+					float dt_t = 0.4;
+					for (int i = 0; i < 5; i++) {
+						ss[i] = adc_val[i];
+					}
+					ADC_Flag = 0;
+				}
+			e2_Sensor = (32 * (ss[4] - ss[0]) + 16*(ss[3] - ss[1])) / (ss[0] + ss[1] + ss[2] + ss[3] + ss[4]);//6
+			e2_Real = 26/20.1* e2_Sensor - 2.13;
+				e3 = asin(e2_Sensor /73 );//73
+				e2_Sensor_pre = e2_Sensor;		
+				
+		
+				
+				
+				
+				Motor_1 = ((vr / r) + ((b * (k1 * e2_Real + k2 * e3)) / (2 * r))) * (60 / (PI * 2)); //((300/r)-((b*(0.1745*e2_Sensor-2.2279*e3))/(2*r)))*(60/(PI*2))
+				Motor_2 = ((vr / r) - ((b * (k1 * e2_Real + k2 * e3)) / (2 * r))) * (60 / (PI * 2));	
 			
+					 if( ((ss[2] < 1500 && ss[1] < 1500 && ss[3] < 1500 && ss[0] > 1500 && ss[4] > 1500)       //10001
+				|| (ss[1]>1500 && ss[2]>1500 && ss[3]>1500)
+				|| (ss[2] < 1500 && ss[1] > 1500 && ss[3] > 1500 && ss[0] < 1500 && ss[4] < 1500)       //01010
+				 || (ss[2] < 1500 && ss[1] > 1500 && ss[3] > 1500 && ss[0] < 1500 && ss[4] > 1500)       //01011
+				 || (ss[2] < 1500 && ss[1] > 1500 && ss[3] > 1500 && ss[0] > 1500 && ss[4] < 1500)      //11010
+				 || (ss[2] < 1500 && ss[1] > 1500 && ss[3] > 1500 && ss[0] > 1500 && ss[4] > 1500)       //11011
+				 || (ss[2] < 1500 && ss[1] > 1500 && ss[3] < 1500 && ss[0] > 1500 && ss[4] > 1500)       //11001
+				 || (ss[2] < 1500 && ss[1] < 1500 && ss[3] > 1500 && ss[0] > 1500 && ss[4] > 1500)       //10011
+				 || (ss[2] > 1500 && ss[1] < 1500 && ss[3] > 1500 && ss[0] > 1500 && ss[4] < 1500)       //10110
+				 || (ss[2] > 1500 && ss[1] > 1500 && ss[3] < 1500 && ss[0] < 1500 && ss[4] > 1500)) && (quang_duong > 4000))   //01101
+				 {		
+					 if(count == 1)
+					 {
+						Motor_1 = 20; 
+					  Motor_2 = 200;	
+					 }
+					 		if(count == 2)
+					 {
+						Motor_1 = 200; 
+					  Motor_2 = 20;	
+					 } 
+					  
+					 
+					 }
+				 
+					 
+					 
+					
+				
 			nowPulse_Encoder1 = __HAL_TIM_GET_COUNTER(&htim3);
 
 			deltaPulse_Encoder1 = abs_((int)(nowPulse_Encoder1 - prePulse_Encoder1));
@@ -530,65 +581,21 @@ int main(void)
 			prePulse_Encoder1 = nowPulse_Encoder1;
 			
       quang_duong = vr * nowTime / 1000;
-			
-					nowTime_1 = HAL_GetTick();
-		if(nowTime_1 - preTime_1 >= tsamp * 10000)
+			nowTime_1 = HAL_GetTick();
+    if(nowTime_1 - preTime_1 >= tsamp * 10000)
 		{
-			if (ADC_Flag){
-					float dt_t = 0.4;
-					for (int i = 0; i < 5; i++) {
-						ss[i] = adc_val[i];
-					}
-					ADC_Flag = 0;
-				}
-			e2_Sensor = (32 * (ss[4] - ss[0]) + 16*(ss[3] - ss[1])) / (ss[0] + ss[1] + ss[2] + ss[3] + ss[4]);//6
-			e2_Real = 26/20.1* e2_Sensor - 2.13;
-				e3 = asin(e2_Sensor /73 );//73
-				e2_Sensor_pre = e2_Sensor;		
-				
-				// Truyen nhan du lieu e2 ve	
-    floatToString(e2_Real, buffer, 2);
-		strcat(buffer, "\n"); // Thêm ký t? xu?ng dòng
-		Transmit_data(buffer);
-				
-				
-				
-				Motor_1 = ((vr / r) + ((b * (k1 * e2_Real + k2 * e3)) / (2 * r))) * (60 / (PI * 2)); //((300/r)-((b*(0.1745*e2_Sensor-2.2279*e3))/(2*r)))*(60/(PI*2))
-				Motor_2 = ((vr / r) - ((b * (k1 * e2_Real + k2 * e3)) / (2 * r))) * (60 / (PI * 2));	
-			
-					 if( ((ss[2] < 1500 && ss[1] < 1500 && ss[3] < 1500 && ss[0] > 1500 && ss[4] > 1500)       //10001
-				|| (ss[1]>1500 && ss[2]>1500 && ss[3]>1500)
-				|| (ss[2] < 1500 && ss[1] > 1500 && ss[3] > 1500 && ss[0] < 1500 && ss[4] < 1500)       //01010
-				 || (ss[2] < 1500 && ss[1] > 1500 && ss[3] > 1500 && ss[0] < 1500 && ss[4] > 1500)       //01011
-				 || (ss[2] < 1500 && ss[1] > 1500 && ss[3] > 1500 && ss[0] > 1500 && ss[4] < 1500)      //11010
-				 || (ss[2] < 1500 && ss[1] > 1500 && ss[3] > 1500 && ss[0] > 1500 && ss[4] > 1500)       //11011
-				 || (ss[2] < 1500 && ss[1] > 1500 && ss[3] < 1500 && ss[0] > 1500 && ss[4] > 1500)       //11001
-				 || (ss[2] < 1500 && ss[1] < 1500 && ss[3] > 1500 && ss[0] > 1500 && ss[4] > 1500)       //10011
-				 || (ss[2] > 1500 && ss[1] < 1500 && ss[3] > 1500 && ss[0] > 1500 && ss[4] < 1500)       //10110
-				 || (ss[2] > 1500 && ss[1] > 1500 && ss[3] < 1500 && ss[0] < 1500 && ss[4] > 1500)) && (quang_duong > 4000))   //01101
-				 {		
-					 if(count == 1)
-					 {
-						Motor_1 = 20; 
-					  Motor_2 = 200;	
-					 }
-					 		if(count == 2)
-					 {
-						Motor_1 = 200; 
-					  Motor_2 = 20;	
-					 } 
-					  			 
-				}
-				 preTime_1 = nowTime_1;
-		}
+			floatToString(e2_Real, buffer, 2);
+			strcat(buffer, "\n"); // Thêm ký t? xu?ng dòng
+			Transmit_data(buffer);
+			preTime_1 = nowTime_1;
+		}			
 			preTime = nowTime;
 
-		}
-	
+
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-		
+		}
 		
 		
         
